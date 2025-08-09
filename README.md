@@ -18,158 +18,128 @@ Go module providing low-level digital signature operations.
 package examples_test
 
 import (
-	"crypto/ecdsa"
-	"crypto/ed25519"
-	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/rsa"
-	"fmt"
+  "crypto/ecdsa"
+  "crypto/ed25519"
+  "crypto/elliptic"
+  "crypto/rand"
+  "crypto/rsa"
+  "fmt"
 
-	"github.com/lestrrat-go/dsig"
+  "github.com/lestrrat-go/dsig"
 )
 
 func Example() {
-	payload := []byte("hello world")
+  payload := []byte("hello world")
 
-	// RSA signing and verification
-	{
-		privKey, err := rsa.GenerateKey(rand.Reader, 2048)
-		if err != nil {
-			fmt.Printf("failed to generate RSA key: %s\n", err)
-			return
-		}
+  // RSA signing and verification
+  {
+    privKey, err := rsa.GenerateKey(rand.Reader, 2048)
+    if err != nil {
+      fmt.Printf("failed to generate RSA key: %s\n", err)
+      return
+    }
 
-		// Sign with RSA-PSS SHA256
-		signature, err := dsig.Sign(privKey, "PS256", payload, nil)
-		if err != nil {
-			fmt.Printf("failed to sign with RSA: %s\n", err)
-			return
-		}
+    // Sign with RSA-PSS SHA256
+    signature, err := dsig.Sign(privKey, dsig.RSAPSSWithSHA256, payload, nil)
+    if err != nil {
+      fmt.Printf("failed to sign with RSA: %s\n", err)
+      return
+    }
 
-		// Verify with RSA-PSS SHA256
-		err = dsig.Verify(&privKey.PublicKey, "PS256", payload, signature)
-		if err != nil {
-			fmt.Printf("failed to verify RSA signature: %s\n", err)
-			return
-		}
-	}
+    // Verify with RSA-PSS SHA256
+    err = dsig.Verify(&privKey.PublicKey, dsig.RSAPSSWithSHA256, payload, signature)
+    if err != nil {
+      fmt.Printf("failed to verify RSA signature: %s\n", err)
+      return
+    }
+  }
 
-	// ECDSA signing and verification
-	{
-		privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-		if err != nil {
-			fmt.Printf("failed to generate ECDSA key: %s\n", err)
-			return
-		}
+  // ECDSA signing and verification
+  {
+    privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+    if err != nil {
+      fmt.Printf("failed to generate ECDSA key: %s\n", err)
+      return
+    }
 
-		// Sign with ECDSA P-256 SHA256
-		signature, err := dsig.Sign(privKey, "ES256", payload, nil)
-		if err != nil {
-			fmt.Printf("failed to sign with ECDSA: %s\n", err)
-			return
-		}
+    // Sign with ECDSA P-256 SHA256
+    signature, err := dsig.Sign(privKey, dsig.ECDSAWithP256AndSHA256, payload, nil)
+    if err != nil {
+      fmt.Printf("failed to sign with ECDSA: %s\n", err)
+      return
+    }
 
-		// Verify with ECDSA P-256 SHA256
-		err = dsig.Verify(&privKey.PublicKey, "ES256", payload, signature)
-		if err != nil {
-			fmt.Printf("failed to verify ECDSA signature: %s\n", err)
-			return
-		}
-	}
+    // Verify with ECDSA P-256 SHA256
+    err = dsig.Verify(&privKey.PublicKey, dsig.ECDSAWithP256AndSHA256, payload, signature)
+    if err != nil {
+      fmt.Printf("failed to verify ECDSA signature: %s\n", err)
+      return
+    }
+  }
 
-	// EdDSA signing and verification
-	{
-		pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
-		if err != nil {
-			fmt.Printf("failed to generate Ed25519 key: %s\n", err)
-			return
-		}
+  // EdDSA signing and verification
+  {
+    pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
+    if err != nil {
+      fmt.Printf("failed to generate Ed25519 key: %s\n", err)
+      return
+    }
 
-		// Sign with EdDSA
-		signature, err := dsig.Sign(privKey, "EdDSA", payload, nil)
-		if err != nil {
-			fmt.Printf("failed to sign with EdDSA: %s\n", err)
-			return
-		}
+    // Sign with EdDSA
+    signature, err := dsig.Sign(privKey, dsig.EdDSA, payload, nil)
+    if err != nil {
+      fmt.Printf("failed to sign with EdDSA: %s\n", err)
+      return
+    }
 
-		// Verify with EdDSA
-		err = dsig.Verify(pubKey, "EdDSA", payload, signature)
-		if err != nil {
-			fmt.Printf("failed to verify EdDSA signature: %s\n", err)
-			return
-		}
-	}
+    // Verify with EdDSA
+    err = dsig.Verify(pubKey, dsig.EdDSA, payload, signature)
+    if err != nil {
+      fmt.Printf("failed to verify EdDSA signature: %s\n", err)
+      return
+    }
+  }
 
-	// HMAC signing and verification
-	{
-		key := []byte("secret-key")
+  // HMAC signing and verification
+  {
+    key := []byte("secret-key")
 
-		// Sign with HMAC SHA256
-		signature, err := dsig.Sign(key, "HS256", payload, nil)
-		if err != nil {
-			fmt.Printf("failed to sign with HMAC: %s\n", err)
-			return
-		}
+    // Sign with HMAC SHA256
+    signature, err := dsig.Sign(key, dsig.HMACWithSHA256, payload, nil)
+    if err != nil {
+      fmt.Printf("failed to sign with HMAC: %s\n", err)
+      return
+    }
 
-		// Verify with HMAC SHA256
-		err = dsig.Verify(key, "HS256", payload, signature)
-		if err != nil {
-			fmt.Printf("failed to verify HMAC signature: %s\n", err)
-			return
-		}
-	}
-
-	// Using generic interfaces
-	{
-		privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-		if err != nil {
-			fmt.Printf("failed to generate ECDSA key: %s\n", err)
-			return
-		}
-
-		// Create a signer instance
-		signer := dsig.NewECDSASigner()
-
-		// Sign using the generic interface
-		signature, err := signer.Sign(privKey, payload)
-		if err != nil {
-			fmt.Printf("failed to sign with generic signer: %s\n", err)
-			return
-		}
-
-		// Create a verifier instance
-		verifier := dsig.NewECDSAVerifier()
-
-		// Verify using the generic interface
-		err = verifier.Verify(&privKey.PublicKey, payload, signature)
-		if err != nil {
-			fmt.Printf("failed to verify with generic verifier: %s\n", err)
-			return
-		}
-	}
-	// OUTPUT:
-}
-```
+    // Verify with HMAC SHA256
+    err = dsig.Verify(key, dsig.HMACWithSHA256, payload, signature)
+    if err != nil {
+      fmt.Printf("failed to verify HMAC signature: %s\n", err)
+      return
+    }
+  }
+  // OUTPUT:
+}```
 source: [examples/dsig_readme_example_test.go](https://github.com/lestrrat-go/dsig/blob/main/examples/dsig_readme_example_test.go)
 <!-- END INCLUDE -->
 
 # Supported Algorithms
 
-| Algorithm | Description | Key Type |
-|-----------|-------------|----------|
-| HS256 | HMAC using SHA-256 | []byte |
-| HS384 | HMAC using SHA-384 | []byte |
-| HS512 | HMAC using SHA-512 | []byte |
-| RS256 | RSA PKCS1v15 using SHA-256 | *rsa.PrivateKey / *rsa.PublicKey |
-| RS384 | RSA PKCS1v15 using SHA-384 | *rsa.PrivateKey / *rsa.PublicKey |
-| RS512 | RSA PKCS1v15 using SHA-512 | *rsa.PrivateKey / *rsa.PublicKey |
-| PS256 | RSA PSS using SHA-256 | *rsa.PrivateKey / *rsa.PublicKey |
-| PS384 | RSA PSS using SHA-384 | *rsa.PrivateKey / *rsa.PublicKey |
-| PS512 | RSA PSS using SHA-512 | *rsa.PrivateKey / *rsa.PublicKey |
-| ES256 | ECDSA using P-256 and SHA-256 | *ecdsa.PrivateKey / *ecdsa.PublicKey |
-| ES384 | ECDSA using P-384 and SHA-384 | *ecdsa.PrivateKey / *ecdsa.PublicKey |
-| ES512 | ECDSA using P-521 and SHA-512 | *ecdsa.PrivateKey / *ecdsa.PublicKey |
-| EdDSA | EdDSA using Ed25519 or Ed448 | ed25519.PrivateKey / ed25519.PublicKey |
+| Constant | Algorithm | Key Type |
+|----------|-----------|----------|
+| `HMACWithSHA256` | HMAC using SHA-256 | []byte |
+| `HMACWithSHA384` | HMAC using SHA-384 | []byte |
+| `HMACWithSHA512` | HMAC using SHA-512 | []byte |
+| `RSAPKCS1v15WithSHA256` | RSA PKCS#1 v1.5 using SHA-256 | *rsa.PrivateKey / *rsa.PublicKey |
+| `RSAPKCS1v15WithSHA384` | RSA PKCS#1 v1.5 using SHA-384 | *rsa.PrivateKey / *rsa.PublicKey |
+| `RSAPKCS1v15WithSHA512` | RSA PKCS#1 v1.5 using SHA-512 | *rsa.PrivateKey / *rsa.PublicKey |
+| `RSAPSSWithSHA256` | RSA PSS using SHA-256 | *rsa.PrivateKey / *rsa.PublicKey |
+| `RSAPSSWithSHA384` | RSA PSS using SHA-384 | *rsa.PrivateKey / *rsa.PublicKey |
+| `RSAPSSWithSHA512` | RSA PSS using SHA-512 | *rsa.PrivateKey / *rsa.PublicKey |
+| `ECDSAWithP256AndSHA256` | ECDSA using P-256 and SHA-256 | *ecdsa.PrivateKey / *ecdsa.PublicKey |
+| `ECDSAWithP384AndSHA384` | ECDSA using P-384 and SHA-384 | *ecdsa.PrivateKey / *ecdsa.PublicKey |
+| `ECDSAWithP521AndSHA512` | ECDSA using P-521 and SHA-512 | *ecdsa.PrivateKey / *ecdsa.PublicKey |
+| `EdDSA` | EdDSA using Ed25519 or Ed448 | ed25519.PrivateKey / ed25519.PublicKey |
 
 # Description
 

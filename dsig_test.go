@@ -22,9 +22,9 @@ func TestHMAC(t *testing.T) {
 		alg   string
 		hfunc func() hash.Hash
 	}{
-		{"HS256", sha256.New},
-		{"HS384", sha512.New384},
-		{"HS512", sha512.New},
+		{dsig.HMACWithSHA256, sha256.New},
+		{dsig.HMACWithSHA384, sha512.New384},
+		{dsig.HMACWithSHA512, sha512.New},
 	}
 
 	for _, tc := range tests {
@@ -56,12 +56,12 @@ func TestRSA(t *testing.T) {
 		h    crypto.Hash
 		pss  bool
 	}{
-		{"RS256", "RS256", crypto.SHA256, false},
-		{"RS384", "RS384", crypto.SHA384, false},
-		{"RS512", "RS512", crypto.SHA512, false},
-		{"PS256", "PS256", crypto.SHA256, true},
-		{"PS384", "PS384", crypto.SHA384, true},
-		{"PS512", "PS512", crypto.SHA512, true},
+		{"RSA_PKCS1v15_WITH_SHA256", dsig.RSAPKCS1v15WithSHA256, crypto.SHA256, false},
+		{"RSA_PKCS1v15_WITH_SHA384", dsig.RSAPKCS1v15WithSHA384, crypto.SHA384, false},
+		{"RSA_PKCS1v15_WITH_SHA512", dsig.RSAPKCS1v15WithSHA512, crypto.SHA512, false},
+		{"RSA_PSS_WITH_SHA256", dsig.RSAPSSWithSHA256, crypto.SHA256, true},
+		{"RSA_PSS_WITH_SHA384", dsig.RSAPSSWithSHA384, crypto.SHA384, true},
+		{"RSA_PSS_WITH_SHA512", dsig.RSAPSSWithSHA512, crypto.SHA512, true},
 	}
 
 	for _, tc := range testcases {
@@ -89,9 +89,9 @@ func TestECDSA(t *testing.T) {
 		curve elliptic.Curve
 		h     crypto.Hash
 	}{
-		{"ES256", "ES256", elliptic.P256(), crypto.SHA256},
-		{"ES384", "ES384", elliptic.P384(), crypto.SHA384},
-		{"ES512", "ES512", elliptic.P521(), crypto.SHA512},
+		{"ECDSA_WITH_P256_AND_SHA256", dsig.ECDSAWithP256AndSHA256, elliptic.P256(), crypto.SHA256},
+		{"ECDSA_WITH_P384_AND_SHA384", dsig.ECDSAWithP384AndSHA384, elliptic.P384(), crypto.SHA384},
+		{"ECDSA_WITH_P521_AND_SHA512", dsig.ECDSAWithP521AndSHA512, elliptic.P521(), crypto.SHA512},
 	}
 
 	for _, tc := range table {
@@ -126,7 +126,7 @@ func TestEdDSA(t *testing.T) {
 	require.Error(t, dsig.VerifyEdDSA(pub, payload, sig[:len(sig)-1]), "VerifyEdDSA should fail for an invalid signature")
 
 	// Test generic Sign/Verify functions
-	sig2, err := dsig.Sign(priv, "EdDSA", payload, nil)
+	sig2, err := dsig.Sign(priv, dsig.EdDSA, payload, nil)
 	require.NoError(t, err, "Sign should not return error")
-	require.NoError(t, dsig.Verify(pub, "EdDSA", payload, sig2), "Verify should succeed for a valid signature")
+	require.NoError(t, dsig.Verify(pub, dsig.EdDSA, payload, sig2), "Verify should succeed for a valid signature")
 }

@@ -13,10 +13,9 @@ import (
 )
 
 var ecdsaHashFuncs = map[string]crypto.Hash{
-	"ES256":  crypto.SHA256,
-	"ES256K": crypto.SHA256,
-	"ES384":  crypto.SHA384,
-	"ES512":  crypto.SHA512,
+	ECDSAWithP256AndSHA256: crypto.SHA256,
+	ECDSAWithP384AndSHA384: crypto.SHA384,
+	ECDSAWithP521AndSHA512: crypto.SHA512,
 }
 
 func isSuppotedECDSAAlgorithm(alg string) bool {

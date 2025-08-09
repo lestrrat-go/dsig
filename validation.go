@@ -44,3 +44,23 @@ func isValidEDDSAKey(key any) bool {
 	}
 	return true
 }
+
+// VerificationError represents an error that occurred during signature verification.
+type VerificationError struct {
+	message string
+}
+
+func (e *VerificationError) Error() string {
+	return e.message
+}
+
+// NewVerificationError creates a new verification error with the given message.
+func NewVerificationError(message string) error {
+	return &VerificationError{message: message}
+}
+
+// IsVerificationError checks if the given error is a verification error.
+func IsVerificationError(err error) bool {
+	_, ok := err.(*VerificationError)
+	return ok
+}

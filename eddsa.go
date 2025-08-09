@@ -7,7 +7,7 @@ import (
 )
 
 func isSupportedEdDSAAlgorithm(alg string) bool {
-	return alg == "EdDSA"
+	return alg == EdDSA
 }
 
 func eddsaGetSigner(key any) (crypto.Signer, error) {

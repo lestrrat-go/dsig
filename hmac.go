@@ -9,9 +9,9 @@ import (
 )
 
 var hmacHashFuncs = map[string]func() hash.Hash{
-	"HS256": sha256.New,
-	"HS384": sha512.New384,
-	"HS512": sha512.New,
+	HMACWithSHA256: sha256.New,
+	HMACWithSHA384: sha512.New384,
+	HMACWithSHA512: sha512.New,
 }
 
 func isSupportedHMACAlgorithm(alg string) bool {
@@ -20,7 +20,7 @@ func isSupportedHMACAlgorithm(alg string) bool {
 }
 
 // HMACHashFuncFor returns the appropriate hash function for the given HMAC algorithm.
-// Supported algorithms: HS256 (SHA-256), HS384 (SHA-384), HS512 (SHA-512).
+// Supported algorithms: HMAC_WITH_SHA256, HMAC_WITH_SHA384, HMAC_WITH_SHA512.
 // Returns the hash function constructor and an error if the algorithm is unsupported.
 func HMACHashFuncFor(alg string) (func() hash.Hash, error) {
 	if h, ok := hmacHashFuncs[alg]; ok {

@@ -23,14 +23,14 @@ func Example() {
 		}
 
 		// Sign with RSA-PSS SHA256
-		signature, err := dsig.Sign(privKey, "PS256", payload, nil)
+		signature, err := dsig.Sign(privKey, dsig.RSAPSSWithSHA256, payload, nil)
 		if err != nil {
 			fmt.Printf("failed to sign with RSA: %s\n", err)
 			return
 		}
 
 		// Verify with RSA-PSS SHA256
-		err = dsig.Verify(&privKey.PublicKey, "PS256", payload, signature)
+		err = dsig.Verify(&privKey.PublicKey, dsig.RSAPSSWithSHA256, payload, signature)
 		if err != nil {
 			fmt.Printf("failed to verify RSA signature: %s\n", err)
 			return
@@ -46,14 +46,14 @@ func Example() {
 		}
 
 		// Sign with ECDSA P-256 SHA256
-		signature, err := dsig.Sign(privKey, "ES256", payload, nil)
+		signature, err := dsig.Sign(privKey, dsig.ECDSAWithP256AndSHA256, payload, nil)
 		if err != nil {
 			fmt.Printf("failed to sign with ECDSA: %s\n", err)
 			return
 		}
 
 		// Verify with ECDSA P-256 SHA256
-		err = dsig.Verify(&privKey.PublicKey, "ES256", payload, signature)
+		err = dsig.Verify(&privKey.PublicKey, dsig.ECDSAWithP256AndSHA256, payload, signature)
 		if err != nil {
 			fmt.Printf("failed to verify ECDSA signature: %s\n", err)
 			return
@@ -69,14 +69,14 @@ func Example() {
 		}
 
 		// Sign with EdDSA
-		signature, err := dsig.Sign(privKey, "EdDSA", payload, nil)
+		signature, err := dsig.Sign(privKey, dsig.EdDSA, payload, nil)
 		if err != nil {
 			fmt.Printf("failed to sign with EdDSA: %s\n", err)
 			return
 		}
 
 		// Verify with EdDSA
-		err = dsig.Verify(pubKey, "EdDSA", payload, signature)
+		err = dsig.Verify(pubKey, dsig.EdDSA, payload, signature)
 		if err != nil {
 			fmt.Printf("failed to verify EdDSA signature: %s\n", err)
 			return
@@ -88,45 +88,16 @@ func Example() {
 		key := []byte("secret-key")
 
 		// Sign with HMAC SHA256
-		signature, err := dsig.Sign(key, "HS256", payload, nil)
+		signature, err := dsig.Sign(key, dsig.HMACWithSHA256, payload, nil)
 		if err != nil {
 			fmt.Printf("failed to sign with HMAC: %s\n", err)
 			return
 		}
 
 		// Verify with HMAC SHA256
-		err = dsig.Verify(key, "HS256", payload, signature)
+		err = dsig.Verify(key, dsig.HMACWithSHA256, payload, signature)
 		if err != nil {
 			fmt.Printf("failed to verify HMAC signature: %s\n", err)
-			return
-		}
-	}
-
-	// Using generic interfaces
-	{
-		privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-		if err != nil {
-			fmt.Printf("failed to generate ECDSA key: %s\n", err)
-			return
-		}
-
-		// Create a signer instance
-		signer := dsig.NewECDSASigner()
-
-		// Sign using the generic interface
-		signature, err := signer.Sign(privKey, payload)
-		if err != nil {
-			fmt.Printf("failed to sign with generic signer: %s\n", err)
-			return
-		}
-
-		// Create a verifier instance
-		verifier := dsig.NewECDSAVerifier()
-
-		// Verify using the generic interface
-		err = verifier.Verify(&privKey.PublicKey, payload, signature)
-		if err != nil {
-			fmt.Printf("failed to verify with generic verifier: %s\n", err)
 			return
 		}
 	}

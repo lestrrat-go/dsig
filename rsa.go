@@ -22,12 +22,12 @@ var rsaHashFuncs = map[string]struct {
 	Hash crypto.Hash
 	PSS  bool // whether to use PSS padding
 }{
-	"RS256": {Hash: crypto.SHA256, PSS: false},
-	"RS384": {Hash: crypto.SHA384, PSS: false},
-	"RS512": {Hash: crypto.SHA512, PSS: false},
-	"PS256": {Hash: crypto.SHA256, PSS: true},
-	"PS384": {Hash: crypto.SHA384, PSS: true},
-	"PS512": {Hash: crypto.SHA512, PSS: true},
+	RSAPKCS1v15WithSHA256: {Hash: crypto.SHA256, PSS: false},
+	RSAPKCS1v15WithSHA384: {Hash: crypto.SHA384, PSS: false},
+	RSAPKCS1v15WithSHA512: {Hash: crypto.SHA512, PSS: false},
+	RSAPSSWithSHA256:      {Hash: crypto.SHA256, PSS: true},
+	RSAPSSWithSHA384:      {Hash: crypto.SHA384, PSS: true},
+	RSAPSSWithSHA512:      {Hash: crypto.SHA512, PSS: true},
 }
 
 func isSuppotedRSAAlgorithm(alg string) bool {
@@ -36,7 +36,7 @@ func isSuppotedRSAAlgorithm(alg string) bool {
 }
 
 // RSAHashFuncFor returns the appropriate hash function and PSS flag for the given RSA algorithm.
-// Supported algorithms: RS256, RS384, RS512 (PKCS#1 v1.5) and PS256, PS384, PS512 (PSS).
+// Supported algorithms: RSA_PKCS1v15_WITH_SHA256/384/512 and RSA_PSS_WITH_SHA256/384/512.
 // Returns the hash function, PSS flag, and an error if the algorithm is unsupported.
 func RSAHashFuncFor(alg string) (crypto.Hash, bool, error) {
 	if h, ok := rsaHashFuncs[alg]; ok {
