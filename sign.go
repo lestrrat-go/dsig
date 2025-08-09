@@ -82,6 +82,7 @@ func dispatchECDSASign(key any, alg string, payload []byte, rr io.Reader) ([]byt
 	if err != nil {
 		return nil, fmt.Errorf(`dsig.Sign: failed to get hash function for %s: %w`, alg, err)
 	}
+	
 	privkey, cs, isCryptoSigner, err := ecdsaGetSignerKey(key)
 	if err != nil {
 		return nil, fmt.Errorf(`dsig.Sign: %w`, err)

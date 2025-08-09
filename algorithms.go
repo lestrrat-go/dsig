@@ -27,9 +27,10 @@ const (
 
 	// ECDSA signature algorithms
 	// These use Elliptic Curve Digital Signature Algorithm with specified curves and hash functions
-	ECDSAWithP256AndSHA256 = "ECDSA_WITH_P256_AND_SHA256"
-	ECDSAWithP384AndSHA384 = "ECDSA_WITH_P384_AND_SHA384"
-	ECDSAWithP521AndSHA512 = "ECDSA_WITH_P521_AND_SHA512"
+	ECDSAWithP256AndSHA256    = "ECDSA_WITH_P256_AND_SHA256"
+	ECDSAWithP384AndSHA384    = "ECDSA_WITH_P384_AND_SHA384"
+	ECDSAWithP521AndSHA512    = "ECDSA_WITH_P521_AND_SHA512"
+	ECDSAWithSecp256k1AndSHA256 = "ECDSA_WITH_SECP256K1_AND_SHA256" // Available with build tag: dsig_secp256k1
 
 	// EdDSA signature algorithms
 	// These use Edwards-curve Digital Signature Algorithm (supports Ed25519 and Ed448)

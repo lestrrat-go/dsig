@@ -5,11 +5,13 @@ Go module providing low-level digital signature operations.
 # Features
 
 * RSA signatures (PKCS1v15 and PSS)
-* ECDSA signatures (P-256, P-384, P-521)
+* ECDSA signatures (P-256, P-384, P-521, secp256k1*)
 * EdDSA signatures (Ed25519, Ed448)
 * HMAC signatures (SHA-256, SHA-384, SHA-512)
 * Generic Signer/Verifier interfaces
 * Support for crypto.Signer interface
+
+\* secp256k1 support requires the `dsig_secp256k1` build tag
 
 # SYNOPSIS
 
@@ -139,13 +141,25 @@ source: [examples/dsig_readme_example_test.go](https://github.com/lestrrat-go/ds
 | `ECDSAWithP256AndSHA256` | ECDSA using P-256 and SHA-256 | *ecdsa.PrivateKey / *ecdsa.PublicKey |
 | `ECDSAWithP384AndSHA384` | ECDSA using P-384 and SHA-384 | *ecdsa.PrivateKey / *ecdsa.PublicKey |
 | `ECDSAWithP521AndSHA512` | ECDSA using P-521 and SHA-512 | *ecdsa.PrivateKey / *ecdsa.PublicKey |
+| `ECDSAWithSecp256k1AndSHA256` | ECDSA using secp256k1 and SHA-256* | *ecdsa.PrivateKey / *ecdsa.PublicKey |
 | `EdDSA` | EdDSA using Ed25519 or Ed448 | ed25519.PrivateKey / ed25519.PublicKey |
+
+\* Requires `dsig_secp256k1` build tag
 
 # Description
 
 This library provides low-level digital signature operations. It does minimal parameter validation for performance, uses strongly typed APIs, and has minimal dependencies.
 
 The generic `Signer[K]` and `Verifier[K]` interfaces provide type-safe operations for different key types.
+
+## Extending with Custom Curves
+
+Third-party libraries can register additional ECDSA curves using `RegisterECDSACurve()`:
+
+```go
+// Register a custom curve
+dsig.RegisterECDSACurve("CUSTOM_CURVE_WITH_SHA256", crypto.SHA256)
+```
 
 # Contributions
 
