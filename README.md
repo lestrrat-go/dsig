@@ -121,7 +121,8 @@ func Example() {
     }
   }
   // OUTPUT:
-}```
+}
+```
 source: [examples/dsig_readme_example_test.go](https://github.com/lestrrat-go/dsig/blob/main/examples/dsig_readme_example_test.go)
 <!-- END INCLUDE -->
 
