@@ -8,7 +8,6 @@ Go module providing low-level digital signature operations.
 * ECDSA signatures (P-256, P-384, P-521)
 * EdDSA signatures (Ed25519, Ed448)
 * HMAC signatures (SHA-256, SHA-384, SHA-512)
-* Generic Signer/Verifier interfaces
 * Support for crypto.Signer interface
 
 # SYNOPSIS
@@ -145,8 +144,6 @@ source: [examples/dsig_readme_example_test.go](https://github.com/lestrrat-go/ds
 # Description
 
 This library provides low-level digital signature operations. It does minimal parameter validation for performance, uses strongly typed APIs, and has minimal dependencies.
-
-The generic `Signer[K]` and `Verifier[K]` interfaces provide type-safe operations for different key types.
 
 ## Extending with Custom Curves
 
