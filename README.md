@@ -145,15 +145,6 @@ source: [examples/dsig_readme_example_test.go](https://github.com/lestrrat-go/ds
 
 This library provides low-level digital signature operations. It does minimal parameter validation for performance, uses strongly typed APIs, and has minimal dependencies.
 
-## Extending with Custom Curves
-
-Third-party libraries can register additional ECDSA curves using `RegisterECDSACurve()`:
-
-```go
-// Register a custom curve
-dsig.RegisterECDSACurve("CUSTOM_CURVE_WITH_SHA256", crypto.SHA256)
-```
-
 # Contributions
 
 ## Issues
