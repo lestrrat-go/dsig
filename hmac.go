@@ -2,32 +2,9 @@ package dsig
 
 import (
 	"crypto/hmac"
-	"crypto/sha256"
-	"crypto/sha512"
 	"fmt"
 	"hash"
 )
-
-var hmacHashFuncs = map[string]func() hash.Hash{
-	HMACWithSHA256: sha256.New,
-	HMACWithSHA384: sha512.New384,
-	HMACWithSHA512: sha512.New,
-}
-
-func isSupportedHMACAlgorithm(alg string) bool {
-	_, ok := hmacHashFuncs[alg]
-	return ok
-}
-
-// HMACHashFuncFor returns the appropriate hash function for the given HMAC algorithm.
-// Supported algorithms: HMAC_WITH_SHA256, HMAC_WITH_SHA384, HMAC_WITH_SHA512.
-// Returns the hash function constructor and an error if the algorithm is unsupported.
-func HMACHashFuncFor(alg string) (func() hash.Hash, error) {
-	if h, ok := hmacHashFuncs[alg]; ok {
-		return h, nil
-	}
-	return nil, fmt.Errorf("unsupported HMAC algorithm %s", alg)
-}
 
 func toHMACKey(dst *[]byte, key any) error {
 	keyBytes, ok := key.([]byte)

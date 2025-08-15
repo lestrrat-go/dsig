@@ -16,7 +16,13 @@ func TestRegisterECDSACurve(t *testing.T) {
 	customAlg := "CUSTOM_P256_WITH_SHA256"
 	
 	// Register P-256 as a "custom" algorithm (for demonstration)
-	dsig.RegisterECDSACurve(customAlg, crypto.SHA256)
+	err := dsig.RegisterAlgorithm(customAlg, dsig.AlgorithmInfo{
+		Family: dsig.ECDSA,
+		Meta: dsig.ECDSAFamilyMeta{
+			Hash: crypto.SHA256,
+		},
+	})
+	require.NoError(t, err)
 
 	// Test that our custom algorithm now works
 	privKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)

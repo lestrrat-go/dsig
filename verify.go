@@ -13,37 +13,42 @@ import (
 // This function loads the verifier registered in the dsig package _ONLY_.
 // It does not support custom verifiers that the user might have registered.
 func Verify(key any, alg string, payload, signature []byte) error {
-	switch {
-	case isSupportedHMACAlgorithm(alg):
-		return dispatchHMACVerify(key, alg, payload, signature)
-	case isSuppotedRSAAlgorithm(alg):
-		return dispatchRSAVerify(key, alg, payload, signature)
-	case isSuppotedECDSAAlgorithm(alg):
-		return dispatchECDSAVerify(key, alg, payload, signature)
-	case isSupportedEdDSAAlgorithm(alg):
-		return dispatchEdDSAVerify(key, alg, payload, signature)
+	info, ok := GetAlgorithmInfo(alg)
+	if !ok {
+		return fmt.Errorf(`dsig.Verify: unsupported signature algorithm %q`, alg)
 	}
 
-	return fmt.Errorf(`dsig.Verify: unsupported signature algorithm %q`, alg)
+	switch info.Family {
+	case HMAC:
+		return dispatchHMACVerify(key, info, payload, signature)
+	case RSA:
+		return dispatchRSAVerify(key, info, payload, signature)
+	case ECDSA:
+		return dispatchECDSAVerify(key, info, payload, signature)
+	case EdDSAFamily:
+		return dispatchEdDSAVerify(key, info, payload, signature)
+	default:
+		return fmt.Errorf(`dsig.Verify: unsupported signature family %q`, info.Family)
+	}
 }
 
-func dispatchHMACVerify(key any, alg string, payload, signature []byte) error {
-	h, err := HMACHashFuncFor(alg)
-	if err != nil {
-		return fmt.Errorf(`dsig.Verify: failed to get hash function for %s: %w`, alg, err)
+func dispatchHMACVerify(key any, info AlgorithmInfo, payload, signature []byte) error {
+	meta, ok := info.Meta.(HMACFamilyMeta)
+	if !ok {
+		return fmt.Errorf(`dsig.Verify: invalid HMAC metadata`)
 	}
 
 	var hmackey []byte
 	if err := toHMACKey(&hmackey, key); err != nil {
 		return fmt.Errorf(`dsig.Verify: %w`, err)
 	}
-	return VerifyHMAC(hmackey, payload, signature, h)
+	return VerifyHMAC(hmackey, payload, signature, meta.HashFunc)
 }
 
-func dispatchRSAVerify(key any, alg string, payload, signature []byte) error {
-	h, pss, err := RSAHashFuncFor(alg)
-	if err != nil {
-		return fmt.Errorf(`dsig.Verify: failed to get hash function for %s: %w`, alg, err)
+func dispatchRSAVerify(key any, info AlgorithmInfo, payload, signature []byte) error {
+	meta, ok := info.Meta.(RSAFamilyMeta)
+	if !ok {
+		return fmt.Errorf(`dsig.Verify: invalid RSA metadata`)
 	}
 
 	var pubkey *rsa.PublicKey
@@ -66,13 +71,13 @@ func dispatchRSAVerify(key any, alg string, payload, signature []byte) error {
 		}
 	}
 
-	return VerifyRSA(pubkey, payload, signature, h, pss)
+	return VerifyRSA(pubkey, payload, signature, meta.Hash, meta.PSS)
 }
 
-func dispatchECDSAVerify(key any, alg string, payload, signature []byte) error {
-	h, err := ECDSAHashFuncFor(alg)
-	if err != nil {
-		return fmt.Errorf(`dsig.Verify: failed to get hash function for %s: %w`, alg, err)
+func dispatchECDSAVerify(key any, info AlgorithmInfo, payload, signature []byte) error {
+	meta, ok := info.Meta.(ECDSAFamilyMeta)
+	if !ok {
+		return fmt.Errorf(`dsig.Verify: invalid ECDSA metadata`)
 	}
 
 	pubkey, cs, isCryptoSigner, err := ecdsaGetVerifierKey(key)
@@ -80,12 +85,12 @@ func dispatchECDSAVerify(key any, alg string, payload, signature []byte) error {
 		return fmt.Errorf(`dsig.Verify: %w`, err)
 	}
 	if isCryptoSigner {
-		return VerifyECDSACryptoSigner(cs, payload, signature, h)
+		return VerifyECDSACryptoSigner(cs, payload, signature, meta.Hash)
 	}
-	return VerifyECDSA(pubkey, payload, signature, h)
+	return VerifyECDSA(pubkey, payload, signature, meta.Hash)
 }
 
-func dispatchEdDSAVerify(key any, _ string, payload, signature []byte) error {
+func dispatchEdDSAVerify(key any, _ AlgorithmInfo, payload, signature []byte) error {
 	var pubkey ed25519.PublicKey
 	signer, ok := key.(crypto.Signer)
 	if ok {

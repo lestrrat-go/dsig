@@ -8,43 +8,9 @@ import (
 	"fmt"
 	"io"
 	"math/big"
-	"sync"
 
 	"github.com/lestrrat-go/dsig/internal/ecutil"
 )
-
-var ecdsaHashFuncs = map[string]crypto.Hash{
-	ECDSAWithP256AndSHA256: crypto.SHA256,
-	ECDSAWithP384AndSHA384: crypto.SHA384,
-	ECDSAWithP521AndSHA512: crypto.SHA512,
-}
-
-var ecdsaMutex sync.RWMutex
-
-// RegisterECDSACurve registers a new ECDSA algorithm with its hash function.
-// This allows third-party libraries to add support for additional curves.
-func RegisterECDSACurve(algorithm string, hash crypto.Hash) {
-	ecdsaMutex.Lock()
-	defer ecdsaMutex.Unlock()
-	
-	ecdsaHashFuncs[algorithm] = hash
-}
-
-func isSuppotedECDSAAlgorithm(alg string) bool {
-	ecdsaMutex.RLock()
-	defer ecdsaMutex.RUnlock()
-	_, ok := ecdsaHashFuncs[alg]
-	return ok
-}
-
-func ECDSAHashFuncFor(alg string) (crypto.Hash, error) {
-	ecdsaMutex.RLock()
-	defer ecdsaMutex.RUnlock()
-	if h, ok := ecdsaHashFuncs[alg]; ok {
-		return h, nil
-	}
-	return 0, fmt.Errorf(`unsupported ECDSA algorithm %s`, alg)
-}
 
 
 func ecdsaGetSignerKey(key any) (*ecdsa.PrivateKey, crypto.Signer, bool, error) {

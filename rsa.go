@@ -18,36 +18,9 @@ func rsaGetSignerCryptoSignerKey(key any) (crypto.Signer, bool, error) {
 	return nil, false, nil
 }
 
-var rsaHashFuncs = map[string]struct {
-	Hash crypto.Hash
-	PSS  bool // whether to use PSS padding
-}{
-	RSAPKCS1v15WithSHA256: {Hash: crypto.SHA256, PSS: false},
-	RSAPKCS1v15WithSHA384: {Hash: crypto.SHA384, PSS: false},
-	RSAPKCS1v15WithSHA512: {Hash: crypto.SHA512, PSS: false},
-	RSAPSSWithSHA256:      {Hash: crypto.SHA256, PSS: true},
-	RSAPSSWithSHA384:      {Hash: crypto.SHA384, PSS: true},
-	RSAPSSWithSHA512:      {Hash: crypto.SHA512, PSS: true},
-}
-
-func isSuppotedRSAAlgorithm(alg string) bool {
-	_, ok := rsaHashFuncs[alg]
-	return ok
-}
-
-// RSAHashFuncFor returns the appropriate hash function and PSS flag for the given RSA algorithm.
-// Supported algorithms: RSA_PKCS1v15_WITH_SHA256/384/512 and RSA_PSS_WITH_SHA256/384/512.
-// Returns the hash function, PSS flag, and an error if the algorithm is unsupported.
-func RSAHashFuncFor(alg string) (crypto.Hash, bool, error) {
-	if h, ok := rsaHashFuncs[alg]; ok {
-		return h.Hash, h.PSS, nil
-	}
-	return 0, false, fmt.Errorf("unsupported RSA algorithm %s", alg)
-}
-
-// RSAPSSOptions returns the PSS options for RSA-PSS signatures with the specified hash.
+// rsaPSSOptions returns the PSS options for RSA-PSS signatures with the specified hash.
 // The salt length is set to equal the hash length as per RFC 7518.
-func RSAPSSOptions(h crypto.Hash) rsa.PSSOptions {
+func rsaPSSOptions(h crypto.Hash) rsa.PSSOptions {
 	return rsa.PSSOptions{
 		Hash:       h,
 		SaltLength: rsa.PSSSaltLengthEqualsHash,
@@ -66,7 +39,7 @@ func SignRSA(key *rsa.PrivateKey, payload []byte, h crypto.Hash, pss bool, rr io
 	}
 	var opts crypto.SignerOpts = h
 	if pss {
-		rsaopts := RSAPSSOptions(h)
+		rsaopts := rsaPSSOptions(h)
 		opts = &rsaopts
 	}
 	return cryptosign(key, payload, h, opts, rr)
