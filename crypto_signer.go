@@ -39,7 +39,7 @@ func cryptosign(signer crypto.Signer, payload []byte, hash crypto.Hash, opts cry
 // Returns the signature bytes or an error if signing fails.
 func SignCryptoSigner(signer crypto.Signer, raw []byte, h crypto.Hash, opts crypto.SignerOpts, rr io.Reader) ([]byte, error) {
 	if signer == nil {
-		return nil, fmt.Errorf("jwsbb.SignCryptoSignerRaw: signer is nil")
+		return nil, fmt.Errorf("dsig.SignCryptoSigner: signer is nil")
 	}
 	return cryptosign(signer, raw, h, opts, rr)
 }

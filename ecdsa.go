@@ -170,7 +170,7 @@ func ecdsaVerify(key *ecdsa.PublicKey, buf []byte, h crypto.Hash, r, s *big.Int)
 func VerifyECDSA(key *ecdsa.PublicKey, payload, signature []byte, h crypto.Hash) error {
 	var r, s big.Int
 	if err := UnpackECDSASignature(signature, key, &r, &s); err != nil {
-		return fmt.Errorf("jwsbb.ECDSAVerifier: failed to unpack ECDSA signature: %w", err)
+		return fmt.Errorf("dsig.VerifyECDSA: failed to unpack ECDSA signature: %w", err)
 	}
 
 	return ecdsaVerify(key, payload, h, &r, &s)
@@ -188,12 +188,12 @@ func VerifyECDSACryptoSigner(signer crypto.Signer, payload, signature []byte, h 
 	case *ecdsa.PublicKey:
 		pubkey = cpub
 	default:
-		return fmt.Errorf(`jwsbb.VerifyECDSACryptoSigner: expected *ecdsa.PublicKey, got %T`, cpub)
+		return fmt.Errorf(`dsig.VerifyECDSACryptoSigner: expected *ecdsa.PublicKey, got %T`, cpub)
 	}
 
 	var r, s big.Int
 	if err := UnpackECDSASignature(signature, pubkey, &r, &s); err != nil {
-		return fmt.Errorf("jwsbb.ECDSAVerifier: failed to unpack ASN.1 encoded ECDSA signature: %w", err)
+		return fmt.Errorf("dsig.VerifyECDSACryptoSigner: failed to unpack ASN.1 encoded ECDSA signature: %w", err)
 	}
 
 	return ecdsaVerify(pubkey, payload, h, &r, &s)
