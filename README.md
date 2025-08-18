@@ -2,6 +2,8 @@
 
 Go module providing low-level digital signature operations.
 
+While there are many standards for generating and verifying digital signatures, the core operations are virtually the same. This module implements the core functionality of digital signature generation / verifications in a framework agnostic way.
+
 # Features
 
 * RSA signatures (PKCS1v15 and PSS)
@@ -9,6 +11,7 @@ Go module providing low-level digital signature operations.
 * EdDSA signatures (Ed25519, Ed448)
 * HMAC signatures (SHA-256, SHA-384, SHA-512)
 * Support for crypto.Signer interface
+* Allows for dynamic additions of algorithms in limited cases.
 
 # SYNOPSIS
 
