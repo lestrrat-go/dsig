@@ -10,8 +10,8 @@ my $link_ref = $ENV{GITHUB_REF};
 if ($link_ref =~ /^(?:refs\/heads\/)?develop\/(v\d+)$/) {
     $link_ref = $1;
 }
-# Default to main if no specific ref
-$link_ref ||= "main";
+# Default to v1 if no specific ref
+$link_ref ||= "v1";
 
 my @files = @ARGV;
 my @has_diff;
@@ -75,6 +75,6 @@ if (!$ENV{AUTODOC_DRYRUN}) {
         system("git", "switch", "-c", "autodoc-pr-$ENV{GITHUB_HEAD_REF}") == 0 or die $!;
         system("git", "commit", "-F", $commit_message_file->filename, @files) == 0 or die $!;
         system("git", "push", "origin", "HEAD:autodoc-pr-$ENV{GITHUB_HEAD_REF}") == 0 or die $!;
-        system("gh", "pr", "create", "--base", "main", "--fill") == 0 or die $!;
+        system("gh", "pr", "create", "--base", "v1", "--fill") == 0 or die $!;
     }
 }

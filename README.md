@@ -1,4 +1,4 @@
-# github.com/lestrrat-go/dsig [![CI](https://github.com/lestrrat-go/dsig/actions/workflows/ci.yml/badge.svg)](https://github.com/lestrrat-go/dsig/actions/workflows/ci.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/lestrrat-go/dsig.svg)](https://pkg.go.dev/github.com/lestrrat-go/dsig) [![codecov.io](https://codecov.io/github/lestrrat-go/dsig/coverage.svg?branch=main)](https://codecov.io/github/lestrrat-go/dsig?branch=main)
+# github.com/lestrrat-go/dsig [![CI](https://github.com/lestrrat-go/dsig/actions/workflows/ci.yml/badge.svg)](https://github.com/lestrrat-go/dsig/actions/workflows/ci.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/lestrrat-go/dsig.svg)](https://pkg.go.dev/github.com/lestrrat-go/dsig) [![codecov.io](https://codecov.io/github/lestrrat-go/dsig/coverage.svg?branch=v1)](https://codecov.io/github/lestrrat-go/dsig?branch=v1)
 
 Go module providing low-level digital signature operations.
 
@@ -123,7 +123,7 @@ func Example() {
   // OUTPUT:
 }
 ```
-source: [examples/dsig_readme_example_test.go](https://github.com/lestrrat-go/dsig/blob/main/examples/dsig_readme_example_test.go)
+source: [examples/dsig_readme_example_test.go](https://github.com/lestrrat-go/dsig/blob/v1/examples/dsig_readme_example_test.go)
 <!-- END INCLUDE -->
 
 # Supported Algorithms
