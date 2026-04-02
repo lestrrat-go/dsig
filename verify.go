@@ -110,11 +110,11 @@ func dispatchEdDSAVerify(key any, _ AlgorithmInfo, payload, signature []byte) er
 }
 
 func dispatchCustomVerify(key any, info AlgorithmInfo, payload, signature []byte) error {
-	meta := info.Meta.(CustomFamilyMeta)
-	if meta.Verifier == nil {
+	verifier, ok := info.Meta.(Verifier)
+	if !ok {
 		return fmt.Errorf(`dsig.Verify: algorithm has no verifier registered`)
 	}
-	return meta.Verifier.Verify(key, payload, signature)
+	return verifier.Verify(key, payload, signature)
 }
 
 func ecdsaGetVerifierKey(key any) (*ecdsa.PublicKey, crypto.Signer, bool, error) {

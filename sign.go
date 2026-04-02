@@ -99,9 +99,9 @@ func dispatchECDSASign(key any, info AlgorithmInfo, payload []byte, rr io.Reader
 }
 
 func dispatchCustomSign(key any, info AlgorithmInfo, payload []byte, rr io.Reader) ([]byte, error) {
-	meta := info.Meta.(CustomFamilyMeta)
-	if meta.Signer == nil {
+	signer, ok := info.Meta.(Signer)
+	if !ok {
 		return nil, fmt.Errorf(`dsig.Sign: algorithm has no signer registered`)
 	}
-	return meta.Signer.Sign(key, payload, rr)
+	return signer.Sign(key, payload, rr)
 }

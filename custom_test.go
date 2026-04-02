@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// testSigner implements dsig.Signer using HMAC-SHA256 for testing purposes.
-type testSigner struct{}
+// testCustomAlgorithm implements both dsig.Signer and dsig.Verifier using HMAC-SHA256.
+type testCustomAlgorithm struct{}
 
-func (testSigner) Sign(key any, payload []byte, _ io.Reader) ([]byte, error) {
+func (testCustomAlgorithm) Sign(key any, payload []byte, _ io.Reader) ([]byte, error) {
 	k, ok := key.([]byte)
 	if !ok {
 		return nil, dsig.NewVerificationError("invalid key type")
@@ -23,33 +23,55 @@ func (testSigner) Sign(key any, payload []byte, _ io.Reader) ([]byte, error) {
 	return mac.Sum(nil), nil
 }
 
-// testVerifier implements dsig.Verifier using HMAC-SHA256 for testing purposes.
-type testVerifier struct{}
-
-func (testVerifier) Verify(key any, payload, signature []byte) error {
+func (testCustomAlgorithm) Verify(key any, payload, signature []byte) error {
 	k, ok := key.([]byte)
 	if !ok {
 		return dsig.NewVerificationError("invalid key type")
 	}
 	mac := hmac.New(sha256.New, k)
 	mac.Write(payload)
-	expected := mac.Sum(nil)
-	if !hmac.Equal(expected, signature) {
+	if !hmac.Equal(mac.Sum(nil), signature) {
 		return dsig.NewVerificationError("signature mismatch")
 	}
 	return nil
 }
 
-const testCustomAlg = "TEST_CUSTOM_ALG"
+// testSignerOnly implements only dsig.Signer.
+type testSignerOnly struct{}
 
-func registerTestCustomAlgorithm(t *testing.T, name string, signer dsig.Signer, verifier dsig.Verifier) {
+func (testSignerOnly) Sign(key any, payload []byte, _ io.Reader) ([]byte, error) {
+	k, ok := key.([]byte)
+	if !ok {
+		return nil, dsig.NewVerificationError("invalid key type")
+	}
+	mac := hmac.New(sha256.New, k)
+	mac.Write(payload)
+	return mac.Sum(nil), nil
+}
+
+// testVerifierOnly implements only dsig.Verifier.
+type testVerifierOnly struct{}
+
+func (testVerifierOnly) Verify(key any, payload, signature []byte) error {
+	k, ok := key.([]byte)
+	if !ok {
+		return dsig.NewVerificationError("invalid key type")
+	}
+	mac := hmac.New(sha256.New, k)
+	mac.Write(payload)
+	if !hmac.Equal(mac.Sum(nil), signature) {
+		return dsig.NewVerificationError("signature mismatch")
+	}
+	return nil
+}
+
+const testCustomAlgName = "TEST_CUSTOM_ALG"
+
+func registerTestCustomAlgorithm(t *testing.T, name string, meta any) {
 	t.Helper()
 	err := dsig.RegisterAlgorithm(name, dsig.AlgorithmInfo{
 		Family: dsig.Custom,
-		Meta: dsig.CustomFamilyMeta{
-			Signer:   signer,
-			Verifier: verifier,
-		},
+		Meta:   meta,
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -58,25 +80,25 @@ func registerTestCustomAlgorithm(t *testing.T, name string, signer dsig.Signer, 
 }
 
 func TestCustomSignVerify(t *testing.T) {
-	registerTestCustomAlgorithm(t, testCustomAlg, testSigner{}, testVerifier{})
+	registerTestCustomAlgorithm(t, testCustomAlgName, testCustomAlgorithm{})
 
 	key := []byte("test-secret-key")
 	payload := []byte("hello world")
 
-	sig, err := dsig.Sign(key, testCustomAlg, payload, nil)
+	sig, err := dsig.Sign(key, testCustomAlgName, payload, nil)
 	require.NoError(t, err)
 
-	err = dsig.Verify(key, testCustomAlg, payload, sig)
+	err = dsig.Verify(key, testCustomAlgName, payload, sig)
 	require.NoError(t, err)
 
 	// Tampered signature should fail
 	sig[0] ^= 0xff
-	err = dsig.Verify(key, testCustomAlg, payload, sig)
+	err = dsig.Verify(key, testCustomAlgName, payload, sig)
 	require.Error(t, err)
 }
 
 func TestCustomRegisterSignerOnly(t *testing.T) {
-	registerTestCustomAlgorithm(t, "TEST_SIGNER_ONLY", testSigner{}, nil)
+	registerTestCustomAlgorithm(t, "TEST_SIGNER_ONLY", testSignerOnly{})
 
 	key := []byte("test-secret-key")
 	payload := []byte("hello world")
@@ -85,57 +107,43 @@ func TestCustomRegisterSignerOnly(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, sig)
 
-	// Verify should fail because no verifier is registered
+	// Verify should fail because Meta does not implement Verifier
 	err = dsig.Verify(key, "TEST_SIGNER_ONLY", payload, sig)
 	require.Error(t, err)
 }
 
 func TestCustomRegisterVerifierOnly(t *testing.T) {
-	registerTestCustomAlgorithm(t, "TEST_VERIFIER_ONLY", nil, testVerifier{})
+	registerTestCustomAlgorithm(t, "TEST_VERIFIER_ONLY", testVerifierOnly{})
 
 	key := []byte("test-secret-key")
 	payload := []byte("hello world")
 
-	// Sign should fail because no signer is registered
+	// Sign should fail because Meta does not implement Signer
 	_, err := dsig.Sign(key, "TEST_VERIFIER_ONLY", payload, nil)
 	require.Error(t, err)
 }
 
-func TestCustomRegisterBothNil(t *testing.T) {
-	err := dsig.RegisterAlgorithm("TEST_BOTH_NIL", dsig.AlgorithmInfo{
+func TestCustomRegisterNoInterface(t *testing.T) {
+	// Meta implements neither Signer nor Verifier
+	err := dsig.RegisterAlgorithm("TEST_NO_IFACE", dsig.AlgorithmInfo{
 		Family: dsig.Custom,
-		Meta: dsig.CustomFamilyMeta{
-			Signer:   nil,
-			Verifier: nil,
-		},
-	})
-	require.Error(t, err)
-}
-
-func TestCustomRegisterWrongMeta(t *testing.T) {
-	err := dsig.RegisterAlgorithm("TEST_WRONG_META", dsig.AlgorithmInfo{
-		Family: dsig.Custom,
-		Meta:   "not a CustomFamilyMeta",
+		Meta:   "not an implementation",
 	})
 	require.Error(t, err)
 }
 
 func TestRegisterDuplicate(t *testing.T) {
-	registerTestCustomAlgorithm(t, "TEST_DUPLICATE", testSigner{}, testVerifier{})
+	registerTestCustomAlgorithm(t, "TEST_DUPLICATE", testCustomAlgorithm{})
 
-	// Re-registration should fail
 	err := dsig.RegisterAlgorithm("TEST_DUPLICATE", dsig.AlgorithmInfo{
 		Family: dsig.Custom,
-		Meta: dsig.CustomFamilyMeta{
-			Signer:   testSigner{},
-			Verifier: testVerifier{},
-		},
+		Meta:   testCustomAlgorithm{},
 	})
 	require.Error(t, err)
 }
 
 func TestUnregisterAndReregister(t *testing.T) {
-	registerTestCustomAlgorithm(t, "TEST_UNREG", testSigner{}, testVerifier{})
+	registerTestCustomAlgorithm(t, "TEST_UNREG", testCustomAlgorithm{})
 
 	err := dsig.UnregisterAlgorithm("TEST_UNREG")
 	require.NoError(t, err)
@@ -147,10 +155,7 @@ func TestUnregisterAndReregister(t *testing.T) {
 	// Re-registration should succeed
 	err = dsig.RegisterAlgorithm("TEST_UNREG", dsig.AlgorithmInfo{
 		Family: dsig.Custom,
-		Meta: dsig.CustomFamilyMeta{
-			Signer:   testSigner{},
-			Verifier: testVerifier{},
-		},
+		Meta:   testCustomAlgorithm{},
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -164,7 +169,6 @@ func TestUnregisterBuiltinAlgorithm(t *testing.T) {
 }
 
 func TestUnregisterNonexistent(t *testing.T) {
-	// Should be a no-op, no error
 	err := dsig.UnregisterAlgorithm("DOES_NOT_EXIST")
 	require.NoError(t, err)
 }

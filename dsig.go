@@ -78,21 +78,19 @@ type EdDSAFamilyMeta struct {
 }
 
 // Signer is an interface for custom signing implementations.
+// For the Custom algorithm family, info.Meta must implement this interface
+// to support signing. The implementation struct can carry any additional
+// metadata it needs (hash functions, curves, etc.).
 type Signer interface {
 	Sign(key any, payload []byte, rand io.Reader) ([]byte, error)
 }
 
 // Verifier is an interface for custom verification implementations.
+// For the Custom algorithm family, info.Meta must implement this interface
+// to support verification. The implementation struct can carry any additional
+// metadata it needs (hash functions, curves, etc.).
 type Verifier interface {
 	Verify(key any, payload, signature []byte) error
-}
-
-// CustomFamilyMeta contains the sign/verify implementations for
-// algorithms not handled by the built-in family dispatch.
-// At least one of Signer or Verifier must be non-nil.
-type CustomFamilyMeta struct {
-	Signer   Signer
-	Verifier Verifier
 }
 
 var algorithms = make(map[string]AlgorithmInfo)
@@ -101,9 +99,10 @@ var muAlgorithms sync.RWMutex
 
 // RegisterAlgorithm registers a new digital signature algorithm with the specified family and metadata.
 //
-// info.Meta should contain extra metadata for some algorithms. HMAC, RSA, ECDSA, and Custom
-// family of algorithms need their respective metadata (HMACFamilyMeta, RSAFamilyMeta,
-// ECDSAFamilyMeta, and CustomFamilyMeta). Metadata for EdDSA is optional.
+// info.Meta should contain extra metadata for some algorithms. HMAC, RSA, and ECDSA
+// families need their respective metadata (HMACFamilyMeta, RSAFamilyMeta, and
+// ECDSAFamilyMeta). Metadata for EdDSA is optional. For the Custom family, Meta
+// must implement at least one of the Signer or Verifier interfaces.
 //
 // Re-registration of an already-registered algorithm name is rejected. Use
 // UnregisterAlgorithm to remove it first if you need to replace it.
@@ -132,12 +131,10 @@ func RegisterAlgorithm(name string, info AlgorithmInfo) error {
 	case EdDSAFamily:
 		// EdDSA metadata is optional for now
 	case Custom:
-		meta, ok := info.Meta.(CustomFamilyMeta)
-		if !ok {
-			return fmt.Errorf("invalid Custom metadata for algorithm %s", name)
-		}
-		if meta.Signer == nil && meta.Verifier == nil {
-			return fmt.Errorf("custom algorithm %s requires at least one of Signer or Verifier", name)
+		_, isSigner := info.Meta.(Signer)
+		_, isVerifier := info.Meta.(Verifier)
+		if !isSigner && !isVerifier {
+			return fmt.Errorf("custom algorithm %s: Meta must implement Signer and/or Verifier", name)
 		}
 	default:
 		return fmt.Errorf("unsupported algorithm family %s for algorithm %s", info.Family, name)

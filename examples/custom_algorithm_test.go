@@ -9,10 +9,12 @@ import (
 	"github.com/lestrrat-go/dsig"
 )
 
-// hmac512Signer implements dsig.Signer using HMAC-SHA512.
-type hmac512Signer struct{}
+// hmac512Algorithm implements both dsig.Signer and dsig.Verifier using HMAC-SHA512.
+// The implementation struct carries its own metadata — in this case, none is needed,
+// but real implementations could include hash functions, curves, or other parameters.
+type hmac512Algorithm struct{}
 
-func (hmac512Signer) Sign(key any, payload []byte, _ io.Reader) ([]byte, error) {
+func (hmac512Algorithm) Sign(key any, payload []byte, _ io.Reader) ([]byte, error) {
 	k, ok := key.([]byte)
 	if !ok {
 		return nil, fmt.Errorf("expected []byte key, got %T", key)
@@ -22,10 +24,7 @@ func (hmac512Signer) Sign(key any, payload []byte, _ io.Reader) ([]byte, error) 
 	return mac.Sum(nil), nil
 }
 
-// hmac512Verifier implements dsig.Verifier using HMAC-SHA512.
-type hmac512Verifier struct{}
-
-func (hmac512Verifier) Verify(key any, payload, signature []byte) error {
+func (hmac512Algorithm) Verify(key any, payload, signature []byte) error {
 	k, ok := key.([]byte)
 	if !ok {
 		return fmt.Errorf("expected []byte key, got %T", key)
@@ -41,13 +40,10 @@ func (hmac512Verifier) Verify(key any, payload, signature []byte) error {
 func Example_customAlgorithm() {
 	const algName = "MY_HMAC_SHA512"
 
-	// Register a custom algorithm with its own sign/verify implementations
+	// Register a custom algorithm — Meta is the implementation itself
 	err := dsig.RegisterAlgorithm(algName, dsig.AlgorithmInfo{
 		Family: dsig.Custom,
-		Meta: dsig.CustomFamilyMeta{
-			Signer:   hmac512Signer{},
-			Verifier: hmac512Verifier{},
-		},
+		Meta:   hmac512Algorithm{},
 	})
 	if err != nil {
 		fmt.Printf("register: %v\n", err)
