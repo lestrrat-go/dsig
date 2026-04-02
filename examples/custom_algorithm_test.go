@@ -53,7 +53,9 @@ func Example_customAlgorithm() {
 		fmt.Printf("register: %v\n", err)
 		return
 	}
-	defer dsig.UnregisterAlgorithm(algName)
+	defer func() {
+		_ = dsig.UnregisterAlgorithm(algName)
+	}()
 
 	key := []byte("my-secret-key")
 	payload := []byte("hello world")

@@ -137,7 +137,7 @@ func RegisterAlgorithm(name string, info AlgorithmInfo) error {
 			return fmt.Errorf("invalid Custom metadata for algorithm %s", name)
 		}
 		if meta.Signer == nil && meta.Verifier == nil {
-			return fmt.Errorf("Custom algorithm %s requires at least one of Signer or Verifier", name)
+			return fmt.Errorf("custom algorithm %s requires at least one of Signer or Verifier", name)
 		}
 	default:
 		return fmt.Errorf("unsupported algorithm family %s for algorithm %s", info.Family, name)
