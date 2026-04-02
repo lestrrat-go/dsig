@@ -9,9 +9,6 @@ import (
 
 // Sign generates a digital signature using the specified key and algorithm.
 //
-// This function loads the signer registered in the dsig package _ONLY_.
-// It does not support custom signers that the user might have registered.
-//
 // rr is an io.Reader that provides randomness for signing. If rr is nil, it defaults to rand.Reader.
 // Not all algorithms require this parameter, but it is included for consistency.
 // 99% of the time, you can pass nil for rr, and it will work fine.
@@ -30,6 +27,8 @@ func Sign(key any, alg string, payload []byte, rr io.Reader) ([]byte, error) {
 		return dispatchECDSASign(key, info, payload, rr)
 	case EdDSAFamily:
 		return dispatchEdDSASign(key, info, payload, rr)
+	case Custom:
+		return dispatchCustomSign(key, info, payload, rr)
 	default:
 		return nil, fmt.Errorf(`dsig.Sign: unsupported signature family %q`, info.Family)
 	}
@@ -97,4 +96,12 @@ func dispatchECDSASign(key any, info AlgorithmInfo, payload []byte, rr io.Reader
 		return SignECDSACryptoSigner(cs, payload, meta.Hash, rr)
 	}
 	return SignECDSA(privkey, payload, meta.Hash, rr)
+}
+
+func dispatchCustomSign(key any, info AlgorithmInfo, payload []byte, rr io.Reader) ([]byte, error) {
+	signer, ok := info.Meta.(Signer)
+	if !ok {
+		return nil, fmt.Errorf(`dsig.Sign: algorithm has no signer registered`)
+	}
+	return signer.Sign(key, payload, rr)
 }
