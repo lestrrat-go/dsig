@@ -14,6 +14,7 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"hash"
+	"io"
 	"sync"
 )
 
@@ -26,6 +27,7 @@ const (
 	RSA
 	ECDSA
 	EdDSAFamily
+	Custom
 	maxFamily
 )
 
@@ -40,6 +42,8 @@ func (f Family) String() string {
 		return "ECDSA"
 	case EdDSAFamily:
 		return "EdDSA"
+	case Custom:
+		return "Custom"
 	default:
 		return "InvalidFamily"
 	}
@@ -73,17 +77,43 @@ type EdDSAFamilyMeta struct {
 	// Reserved for future use
 }
 
+// Signer is an interface for custom signing implementations.
+type Signer interface {
+	Sign(key any, payload []byte, rand io.Reader) ([]byte, error)
+}
+
+// Verifier is an interface for custom verification implementations.
+type Verifier interface {
+	Verify(key any, payload, signature []byte) error
+}
+
+// CustomFamilyMeta contains the sign/verify implementations for
+// algorithms not handled by the built-in family dispatch.
+// At least one of Signer or Verifier must be non-nil.
+type CustomFamilyMeta struct {
+	Signer   Signer
+	Verifier Verifier
+}
+
 var algorithms = make(map[string]AlgorithmInfo)
+var builtinAlgorithms = make(map[string]struct{})
 var muAlgorithms sync.RWMutex
 
 // RegisterAlgorithm registers a new digital signature algorithm with the specified family and metadata.
 //
-// info.Meta should contain extra metadata for some algorithms. Currently HMAC, RSA,
-// and ECDSA family of algorithms need their respective metadata (HMACFamilyMeta,
-// RSAFamilyMeta, and ECDSAFamilyMeta). Metadata for other families are ignored.
+// info.Meta should contain extra metadata for some algorithms. HMAC, RSA, ECDSA, and Custom
+// family of algorithms need their respective metadata (HMACFamilyMeta, RSAFamilyMeta,
+// ECDSAFamilyMeta, and CustomFamilyMeta). Metadata for EdDSA is optional.
+//
+// Re-registration of an already-registered algorithm name is rejected. Use
+// UnregisterAlgorithm to remove it first if you need to replace it.
 func RegisterAlgorithm(name string, info AlgorithmInfo) error {
 	muAlgorithms.Lock()
 	defer muAlgorithms.Unlock()
+
+	if _, exists := algorithms[name]; exists {
+		return fmt.Errorf("algorithm %s is already registered", name)
+	}
 
 	// Validate the metadata matches the family
 	switch info.Family {
@@ -101,11 +131,34 @@ func RegisterAlgorithm(name string, info AlgorithmInfo) error {
 		}
 	case EdDSAFamily:
 		// EdDSA metadata is optional for now
+	case Custom:
+		meta, ok := info.Meta.(CustomFamilyMeta)
+		if !ok {
+			return fmt.Errorf("invalid Custom metadata for algorithm %s", name)
+		}
+		if meta.Signer == nil && meta.Verifier == nil {
+			return fmt.Errorf("Custom algorithm %s requires at least one of Signer or Verifier", name)
+		}
 	default:
 		return fmt.Errorf("unsupported algorithm family %s for algorithm %s", info.Family, name)
 	}
 
 	algorithms[name] = info
+	return nil
+}
+
+// UnregisterAlgorithm removes a previously registered algorithm by name.
+// Built-in algorithms cannot be unregistered.
+// It is a no-op if the algorithm is not registered.
+func UnregisterAlgorithm(name string) error {
+	muAlgorithms.Lock()
+	defer muAlgorithms.Unlock()
+
+	if _, ok := builtinAlgorithms[name]; ok {
+		return fmt.Errorf("algorithm %s is a built-in algorithm and cannot be unregistered", name)
+	}
+
+	delete(algorithms, name)
 	return nil
 }
 
@@ -219,6 +272,7 @@ func init() {
 		if err := RegisterAlgorithm(name, info); err != nil {
 			panic(fmt.Sprintf("failed to register algorithm %s: %v", name, err))
 		}
+		builtinAlgorithms[name] = struct{}{}
 	}
 }
 

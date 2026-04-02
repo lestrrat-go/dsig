@@ -9,9 +9,6 @@ import (
 )
 
 // Verify verifies a digital signature using the specified key and algorithm.
-//
-// This function loads the verifier registered in the dsig package _ONLY_.
-// It does not support custom verifiers that the user might have registered.
 func Verify(key any, alg string, payload, signature []byte) error {
 	info, ok := GetAlgorithmInfo(alg)
 	if !ok {
@@ -27,6 +24,8 @@ func Verify(key any, alg string, payload, signature []byte) error {
 		return dispatchECDSAVerify(key, info, payload, signature)
 	case EdDSAFamily:
 		return dispatchEdDSAVerify(key, info, payload, signature)
+	case Custom:
+		return dispatchCustomVerify(key, info, payload, signature)
 	default:
 		return fmt.Errorf(`dsig.Verify: unsupported signature family %q`, info.Family)
 	}
@@ -108,6 +107,14 @@ func dispatchEdDSAVerify(key any, _ AlgorithmInfo, payload, signature []byte) er
 	}
 
 	return VerifyEdDSA(pubkey, payload, signature)
+}
+
+func dispatchCustomVerify(key any, info AlgorithmInfo, payload, signature []byte) error {
+	meta := info.Meta.(CustomFamilyMeta)
+	if meta.Verifier == nil {
+		return fmt.Errorf(`dsig.Verify: algorithm has no verifier registered`)
+	}
+	return meta.Verifier.Verify(key, payload, signature)
 }
 
 func ecdsaGetVerifierKey(key any) (*ecdsa.PublicKey, crypto.Signer, bool, error) {
