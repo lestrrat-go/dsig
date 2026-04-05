@@ -1,6 +1,13 @@
 Changes
 =======
 
+v1.2.0 UNRELEASED
+  * Add `VerifyDigest()` for verifying signatures against pre-computed digests.
+    Supported for HMAC, RSA, and ECDSA families. EdDSA and Custom return an error.
+
+  * Add low-level digest verification functions: `VerifyHMACDigest()`,
+    `VerifyRSADigest()`, `VerifyECDSADigest()`.
+
 v1.1.0 2 Apr 2026
   * Add `Custom` algorithm family for registering user-defined sign/verify
     implementations. For the `Custom` family, `AlgorithmInfo.Meta` must implement
