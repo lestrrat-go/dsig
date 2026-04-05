@@ -1,7 +1,7 @@
 Changes
 =======
 
-v1.2.0 UNRELEASED
+v1.2.0 6 Apr 2026
   * Add `VerifyDigest()` for verifying signatures against pre-computed digests.
     Supported for HMAC, RSA, and ECDSA families. EdDSA and Custom return an error.
 
