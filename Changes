@@ -1,6 +1,10 @@
 Changes
 =======
 
+v1.2.1 UNRELEASED
+  * Add `SignDigest()` for signing pre-computed digests. Supported for HMAC,
+    RSA (PKCS1v15 and PSS), and ECDSA families. EdDSA and Custom return an error.
+
 v1.2.0 6 Apr 2026
   * Add `VerifyDigest()` for verifying signatures against pre-computed digests.
     Supported for HMAC, RSA, and ECDSA families. EdDSA and Custom return an error.
