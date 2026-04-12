@@ -1,6 +1,13 @@
 Changes
 =======
 
+v1.3.0 UNRELEASED
+  * Add `SignECDSADER()` and `VerifyECDSADER()` primitive helpers for ECDSA
+    signatures in ASN.1 DER-encoded `Ecdsa-Sig-Value` form (RFC 3279 §2.2.3),
+    as used by X.509/PKIX and composite signature schemes. The existing
+    `SignECDSA()`/`VerifyECDSA()` functions remain the canonical entry points
+    for the JWS-native fixed-length r||s format (RFC 7515 §3.4).
+
 v1.2.1 7 Apr 2026
   * Add `SignDigest()` for signing pre-computed digests. Supported for HMAC,
     RSA (PKCS1v15 and PSS), and ECDSA families. EdDSA and Custom return an error.
