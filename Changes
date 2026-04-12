@@ -1,7 +1,7 @@
 Changes
 =======
 
-v1.3.0 UNRELEASED
+v1.2.2 UNRELEASED
   * Add `SignECDSADER()` and `VerifyECDSADER()` primitive helpers for ECDSA
     signatures in ASN.1 DER-encoded `Ecdsa-Sig-Value` form (RFC 3279 §2.2.3),
     as used by X.509/PKIX and composite signature schemes. The existing
