@@ -1,7 +1,7 @@
 Changes
 =======
 
-v1.3.0 UNRELEASED
+v1.3.0 13 Apr 2026
   * Add `SignWithOpts()` and `VerifyWithOpts()`, which thread an optional
     `crypto.SignerOpts` through to the underlying signer. For built-in
     families (HMAC, RSA, ECDSA, EdDSA) the opts argument is ignored. For
