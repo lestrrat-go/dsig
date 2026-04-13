@@ -1,6 +1,7 @@
 package dsig_test
 
 import (
+	"crypto"
 	"crypto/hmac"
 	"crypto/sha256"
 	"io"
@@ -171,4 +172,147 @@ func TestUnregisterBuiltinAlgorithm(t *testing.T) {
 func TestUnregisterNonexistent(t *testing.T) {
 	err := dsig.UnregisterAlgorithm("DOES_NOT_EXIST")
 	require.NoError(t, err)
+}
+
+// ctxOpts encodes a "context" in the per-call opts that the test custom
+// signer mixes into its MAC. This stands in for the real ML-DSA
+// context-string parameter.
+type ctxOpts struct {
+	context []byte
+}
+
+func (ctxOpts) HashFunc() crypto.Hash { return 0 }
+
+// optsAwareSigner implements both Signer/Verifier (so the plain Sign /
+// Verify paths still work) and SignerWithOpts/VerifierWithOpts (so the
+// dispatcher can route per-call opts through). The opts byte slice is
+// prepended to the MAC input — that way a signature produced with one
+// context will not verify under another, mirroring the real ML-DSA
+// domain-separation behavior.
+type optsAwareSigner struct{}
+
+func (optsAwareSigner) macKey(key any) ([]byte, error) {
+	k, ok := key.([]byte)
+	if !ok {
+		return nil, dsig.NewVerificationError("invalid key type")
+	}
+	return k, nil
+}
+
+func (s optsAwareSigner) signWithCtx(key any, payload, ctx []byte) ([]byte, error) {
+	k, err := s.macKey(key)
+	if err != nil {
+		return nil, err
+	}
+	mac := hmac.New(sha256.New, k)
+	mac.Write(ctx)
+	mac.Write([]byte{0})
+	mac.Write(payload)
+	return mac.Sum(nil), nil
+}
+
+func (s optsAwareSigner) verifyWithCtx(key any, payload, sig, ctx []byte) error {
+	want, err := s.signWithCtx(key, payload, ctx)
+	if err != nil {
+		return err
+	}
+	if !hmac.Equal(want, sig) {
+		return dsig.NewVerificationError("signature mismatch")
+	}
+	return nil
+}
+
+func (s optsAwareSigner) Sign(key any, payload []byte, _ io.Reader) ([]byte, error) {
+	return s.signWithCtx(key, payload, nil)
+}
+
+func (s optsAwareSigner) Verify(key any, payload, sig []byte) error {
+	return s.verifyWithCtx(key, payload, sig, nil)
+}
+
+func (s optsAwareSigner) SignWithOpts(key any, payload []byte, opts crypto.SignerOpts, _ io.Reader) ([]byte, error) {
+	var ctx []byte
+	if o, ok := opts.(ctxOpts); ok {
+		ctx = o.context
+	}
+	return s.signWithCtx(key, payload, ctx)
+}
+
+func (s optsAwareSigner) VerifyWithOpts(key any, payload, sig []byte, opts crypto.SignerOpts) error {
+	var ctx []byte
+	if o, ok := opts.(ctxOpts); ok {
+		ctx = o.context
+	}
+	return s.verifyWithCtx(key, payload, sig, ctx)
+}
+
+func TestSignWithOptsRoutesToOptsAwareSigner(t *testing.T) {
+	const algName = "TEST_OPTS_AWARE"
+	registerTestCustomAlgorithm(t, algName, optsAwareSigner{})
+
+	key := []byte("secret")
+	payload := []byte("hello")
+	opts := ctxOpts{context: []byte("CTX-A")}
+
+	// SignWithOpts must call the SignerWithOpts path.
+	sig, err := dsig.SignWithOpts(key, algName, payload, opts, nil)
+	require.NoError(t, err, "SignWithOpts")
+
+	// Same opts must verify.
+	require.NoError(t, dsig.VerifyWithOpts(key, algName, payload, sig, opts), "VerifyWithOpts with matching ctx")
+
+	// Different context must fail — proves the opts are flowing through.
+	require.Error(t,
+		dsig.VerifyWithOpts(key, algName, payload, sig, ctxOpts{context: []byte("CTX-B")}),
+		"VerifyWithOpts with different ctx must fail",
+	)
+
+	// Plain Verify (no opts) corresponds to ctx=nil and must also fail
+	// because the signature was computed with CTX-A.
+	require.Error(t, dsig.Verify(key, algName, payload, sig), "plain Verify must fail when sig was produced with non-empty ctx")
+}
+
+// signerOnlyNoOpts implements only the plain Signer interface. SignWithOpts
+// must fall back to Sign and silently drop the opts argument.
+type signerOnlyNoOpts struct{}
+
+func (signerOnlyNoOpts) Sign(key any, payload []byte, _ io.Reader) ([]byte, error) {
+	k, ok := key.([]byte)
+	if !ok {
+		return nil, dsig.NewVerificationError("invalid key type")
+	}
+	mac := hmac.New(sha256.New, k)
+	mac.Write(payload)
+	return mac.Sum(nil), nil
+}
+
+func (signerOnlyNoOpts) Verify(key any, payload, sig []byte) error {
+	want, err := signerOnlyNoOpts{}.Sign(key, payload, nil)
+	if err != nil {
+		return err
+	}
+	if !hmac.Equal(want, sig) {
+		return dsig.NewVerificationError("signature mismatch")
+	}
+	return nil
+}
+
+func TestSignWithOptsFallsBackToPlainSigner(t *testing.T) {
+	const algName = "TEST_PLAIN_FALLBACK"
+	registerTestCustomAlgorithm(t, algName, signerOnlyNoOpts{})
+
+	key := []byte("secret")
+	payload := []byte("hello")
+
+	// Even though we pass non-nil opts, the plain Sign path is called
+	// because signerOnlyNoOpts does not implement SignerWithOpts. The
+	// resulting signature must verify under both VerifyWithOpts (which
+	// also falls back) and plain Verify.
+	sig, err := dsig.SignWithOpts(key, algName, payload, ctxOpts{context: []byte("ignored")}, nil)
+	require.NoError(t, err, "SignWithOpts fallback")
+
+	require.NoError(t, dsig.VerifyWithOpts(key, algName, payload, sig, ctxOpts{context: []byte("also-ignored")}),
+		"VerifyWithOpts fallback")
+	require.NoError(t, dsig.Verify(key, algName, payload, sig),
+		"plain Verify after SignWithOpts fallback")
 }
