@@ -16,7 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: [ '1.24', '1.23' ]
+        # 1.27 is required: crypto/mldsa lands there, and mldsa.go is
+        # constrained to go1.27, so no earlier toolchain compiles it.
+        go: [ '1.27', '1.26', '1.25' ]
     name: "Test [ Go ${{ matrix.go }} ]"
     steps:
       - name: Checkout repository
