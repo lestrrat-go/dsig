@@ -2,10 +2,10 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - v1
   pull_request:
     branches:
-      - main
+      - v1
 
 jobs:
   build:
@@ -39,6 +39,6 @@ jobs:
         if: matrix.go == '1.24'
         uses: codecov/codecov-action@v6
         with:
-          file: ./coverage.out
+          files: ./coverage.out
           flags: unittests
           name: codecov-umbrella
