@@ -94,7 +94,6 @@ func TestECDSA(t *testing.T) {
 		{"ECDSA_WITH_P521_AND_SHA512", dsig.ECDSAWithP521AndSHA512, elliptic.P521(), crypto.SHA512},
 	}
 
-
 	for _, tc := range table {
 		t.Run(tc.name, func(t *testing.T) {
 			payload := []byte("hello world")

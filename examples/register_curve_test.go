@@ -14,7 +14,7 @@ import (
 func TestRegisterECDSACurve(t *testing.T) {
 	// Define a custom algorithm name
 	customAlg := "CUSTOM_P256_WITH_SHA256"
-	
+
 	// Register P-256 as a "custom" algorithm (for demonstration)
 	err := dsig.RegisterAlgorithm(customAlg, dsig.AlgorithmInfo{
 		Family: dsig.ECDSA,
