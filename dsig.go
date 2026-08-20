@@ -297,4 +297,3 @@ func init() {
 		builtinAlgorithms[name] = struct{}{}
 	}
 }
-

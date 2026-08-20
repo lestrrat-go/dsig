@@ -242,4 +242,3 @@ func dispatchECDSASignDigest(key any, info AlgorithmInfo, digest []byte, rr io.R
 	}
 	return PackECDSASignature(r, s, privkey.Curve.Params().BitSize)
 }
-
