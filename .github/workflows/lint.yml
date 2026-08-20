@@ -1,5 +1,12 @@
 name: lint
-on: [push]
+# pull_request is what covers a PR from a fork: its pushes land in the fork,
+# so they never trigger anything here. push is narrowed to v1 so a same-repo
+# PR does not run this twice.
+on:
+  push:
+    branches:
+      - v1
+  pull_request:
 jobs:
   golangci:
     name: lint
@@ -13,3 +20,9 @@ jobs:
       - name: Run go vet
         run: |
           go vet ./...
+      # Moved here from smoke.yml, which is push-only and so never sees a PR
+      # from a fork. AUTODOC_DRYRUN makes this report drift without writing
+      # anything or touching git.
+      - name: Check documentation generator
+        run: |
+          find . -name '*.md' | xargs env AUTODOC_DRYRUN=1 perl tools/autodoc.pl
