@@ -1,3 +1,7 @@
+# The only test workflow. A separate smoke run used to exist so feature
+# branches could take a fast subset, but this suite has no fast/slow split and
+# finishes in seconds, so the two had drifted into running the same command
+# twice per pull request.
 name: CI
 on:
   push:

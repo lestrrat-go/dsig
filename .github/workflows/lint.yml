@@ -20,9 +20,8 @@ jobs:
       - name: Run go vet
         run: |
           go vet ./...
-      # Moved here from smoke.yml, which is push-only and so never sees a PR
-      # from a fork. AUTODOC_DRYRUN makes this report drift without writing
-      # anything or touching git.
+      # AUTODOC_DRYRUN makes this report drift without writing anything or
+      # touching git.
       - name: Check documentation generator
         run: |
           find . -name '*.md' | xargs env AUTODOC_DRYRUN=1 perl tools/autodoc.pl
