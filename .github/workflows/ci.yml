@@ -34,11 +34,4 @@ jobs:
       - name: Run go mod tidy
         run: go mod tidy
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out ./...
-      - name: Upload coverage to Codecov
-        if: matrix.go == '1.24'
-        uses: codecov/codecov-action@v6
-        with:
-          files: ./coverage.out
-          flags: unittests
-          name: codecov-umbrella
+        run: go test -v -race -cover ./...
