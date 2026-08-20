@@ -5,9 +5,12 @@ use File::Temp;
 # Accept a list of filenames, and process them
 # if any of them has a diff, commit it
 
-# Use GITHUB_REF, but if the ref is develop/v\d, then use v\d
+# Turn GITHUB_REF into something usable in a blob URL. GitHub hands us a full
+# ref such as "refs/heads/v1", which must not appear in the link verbatim.
+# The develop/vN form is collapsed to vN for repositories that use it.
 my $link_ref = $ENV{GITHUB_REF};
-if ($link_ref =~ /^(?:refs\/heads\/)?develop\/(v\d+)$/) {
+$link_ref =~ s{^refs/heads/}{} if defined $link_ref;
+if (defined $link_ref && $link_ref =~ m{^develop/(v\d+)$}) {
     $link_ref = $1;
 }
 # Default to v1 if no specific ref
@@ -42,6 +45,10 @@ for my $filename (@files) {
             <$file>;
         };
         $content =~ s{^(\t+)}{"  " x length($1)}gsme;
+        # A source file that does not end in a newline would otherwise put the
+        # closing fence on the same line as the last line of code, which breaks
+        # the code block.
+        $content .= "\n" unless $content =~ /\n$/;
         $output->print($content);
         $output->print("```\n");
 
