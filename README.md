@@ -1,4 +1,4 @@
-# github.com/lestrrat-go/dsig [![CI](https://github.com/lestrrat-go/dsig/actions/workflows/ci.yml/badge.svg)](https://github.com/lestrrat-go/dsig/actions/workflows/ci.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/lestrrat-go/dsig.svg)](https://pkg.go.dev/github.com/lestrrat-go/dsig) [![codecov.io](https://codecov.io/github/lestrrat-go/dsig/coverage.svg?branch=v1)](https://codecov.io/github/lestrrat-go/dsig?branch=v1)
+# github.com/lestrrat-go/dsig [![CI](https://github.com/lestrrat-go/dsig/actions/workflows/ci.yml/badge.svg)](https://github.com/lestrrat-go/dsig/actions/workflows/ci.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/lestrrat-go/dsig.svg)](https://pkg.go.dev/github.com/lestrrat-go/dsig)
 
 Go module providing low-level digital signature operations.
 
