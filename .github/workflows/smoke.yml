@@ -1,12 +1,12 @@
-# Smoke tests only run on non-main branches. Smoke tests cut
-# some corners by running selected tests in parallel (to shave off
-# some execution time)
-# Once a pull request is merged to main, workflows/ci.yml is run
+# Smoke tests only run on branches other than v1. They cut some
+# corners by running selected tests in parallel (to shave off some
+# execution time).
+# Once a pull request is merged to v1, workflows/ci.yml is run.
 name: Smoke Tests
 on:
   push:
     branches-ignore:
-      - main
+      - v1
 
 jobs:
   build:
